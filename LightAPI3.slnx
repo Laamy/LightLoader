@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="LightAPI3/LightAPI3.vcxproj" Id="45578550-12a8-438c-9553-ade9c4fa426e" />
+</Solution>
