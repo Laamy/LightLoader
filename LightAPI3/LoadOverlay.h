@@ -20,12 +20,9 @@
 
 namespace fs = std::filesystem;
 namespace OvlComps {
-	HWND OverlayWnd;
-	HWND TargetWnd;
+	bool IsLoading = true;
 
-	DWORD RenderThread;
-
-	HHOOK hHook;
+	HWND BedrockWnd;
 
 	// resources for loader overlay
 	Gdiplus::PrivateFontCollection* pfc = nullptr;
@@ -52,6 +49,9 @@ void SuspendGame(bool suspend)
 			if (te.th32OwnerProcessID != pid)
 				continue;
 
+			if (te.th32ThreadID == GetCurrentThreadId())
+				continue;
+
 			HANDLE hThread = OpenThread(THREAD_QUERY_INFORMATION | THREAD_SUSPEND_RESUME, FALSE, te.th32ThreadID);
 
 			PWSTR pDesc = nullptr;
@@ -60,11 +60,16 @@ void SuspendGame(bool suspend)
 			if (SUCCEEDED(GetThreadDescription(hThread, &pDesc)) && pDesc) {
 				if (wcsstr(pDesc, L"IO Thread") != nullptr) // this thread sets up the game grr
 					match = true;
+				if (lstrlenW(pDesc) <= 3)
+					match = true; // starts d3d threads & window message loop but loading libraries freezes the message loop anyways so i dont care
 				LocalFree(pDesc);
 			}
 
 			if (!match)
+			{
+				CloseHandle(hThread);
 				continue;
+			}
 
 			if (suspend)
 				SuspendThread((HANDLE)hThread);
@@ -77,10 +82,32 @@ void SuspendGame(bool suspend)
 	CloseHandle(hSnap);
 }
 
+void Render(Gdiplus::Graphics* g, const RECT& rcClient);
+
+// bro i dont care if it updates or not anymore fuck it
 std::wstring status = L"Initializing";
 void UpdateStatus(std::wstring wstr) {
 	status = wstr;
-	InvalidateRect(OvlComps::OverlayWnd, nullptr, false);
+
+	std::print("MC paint event omg\n");
+	PAINTSTRUCT ps;
+	HDC hdc = BeginPaint(OvlComps::BedrockWnd, &ps);
+
+	RECT rcClient;
+	GetClientRect(OvlComps::BedrockWnd, &rcClient);
+
+	auto bufferBitmap = Gdiplus::Bitmap((int)rcClient.right, (int)rcClient.bottom);
+	Gdiplus::Graphics* gBuff = Gdiplus::Graphics::FromImage(&bufferBitmap);
+
+	Render(gBuff, rcClient);
+	delete gBuff;
+
+	Gdiplus::Graphics gScreen(hdc);
+	gScreen.DrawImage(&bufferBitmap, 0, 0, rcClient.right, rcClient.bottom);
+
+	EndPaint(OvlComps::BedrockWnd, &ps);
+
+	UpdateWindow(OvlComps::BedrockWnd);
 }
 
 void ModLoaderThread() {
@@ -101,13 +128,7 @@ void ModLoaderThread() {
 		}
 	}
 
-	UpdateStatus(L"Completed");
-	Sleep(1000);
-
 	SuspendGame(false);
-
-	UnhookWindowsHookEx(OvlComps::hHook);
-	CloseWindow(OvlComps::OverlayWnd);
 
 	delete OvlComps::McSplash;
 	delete OvlComps::Bedrock;
@@ -157,209 +178,29 @@ void Render(Gdiplus::Graphics* g, const RECT& rcClient) {
 	g->DrawString(status.c_str(), -1, OvlComps::SmallMojangles, Gdiplus::PointF((rcClient.right / 2) - (mrs.Width/2), 225), nullptr, &textBrush);
 }
 
-LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-	switch (msg) {
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		return 0;
-	case WM_PAINT:
-		PAINTSTRUCT ps;
-		HDC hdc = BeginPaint(hwnd, &ps);
-
-		RECT rcClient;
-		GetClientRect(hwnd, &rcClient);
-
-		auto bufferBitmap = Gdiplus::Bitmap((int)rcClient.right, (int)rcClient.bottom);
-		Gdiplus::Graphics* gBuff = Gdiplus::Graphics::FromImage(&bufferBitmap);
-
-		Render(gBuff, rcClient);
-		delete gBuff;
-
-		Gdiplus::Graphics gScreen(hdc);
-		gScreen.DrawImage(&bufferBitmap, 0, 0, rcClient.right, rcClient.bottom);
-
-		EndPaint(hwnd, &ps);
-		return 0;
-	}
-	return DefWindowProc(hwnd, msg, wParam, lParam);
-}
-
-void SetOverlayTopmost(bool enable)
-{
-	SetWindowPos(
-		OvlComps::OverlayWnd,
-		enable ? HWND_TOPMOST : HWND_NOTOPMOST,
-		0, 0, 0, 0,
-		SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-}
-
-void Refresh() {
-	SetOverlayTopmost(true); // probably (overlay disappears quickly after anyways)
-
-	RECT rcClient;
-	GetClientRect(OvlComps::TargetWnd, &rcClient);
-
-	POINT pt = { rcClient.left, rcClient.top };
-	ClientToScreen(OvlComps::TargetWnd, &pt);
-
-	RECT rcScreen = { pt.x,
-					  pt.y,
-					  pt.x + (rcClient.right - rcClient.left),
-					  pt.y + (rcClient.bottom - rcClient.top) };
-
-	SetWindowPos(
-		OvlComps::OverlayWnd,
-		HWND_NOTOPMOST,
-		rcScreen.left,
-		rcScreen.top,
-		rcScreen.right - rcScreen.left,
-		rcScreen.bottom - rcScreen.top,
-		SWP_NOACTIVATE | SWP_SHOWWINDOW);
-}
-
-LRESULT CALLBACK CallWndProcHook(int nCode, WPARAM wParam, LPARAM lParam) {
-	if (nCode >= 0) {
-		const CWPSTRUCT* cw = reinterpret_cast<CWPSTRUCT*>(lParam);
-		if (cw->hwnd == OvlComps::TargetWnd)
-		{
-			if (cw->message == WM_MOVE || cw->message == WM_SIZE ||
-				cw->message == WM_SHOWWINDOW)
-				Refresh();
-
-			std::print("message {}\n", cw->message);
-		}
-
-		if (cw->message == WM_ACTIVATE || cw->message == WM_NCACTIVATE)
-		{
-			bool targetIsActive = (LOWORD(cw->wParam) != WA_INACTIVE);
-			SetOverlayTopmost(targetIsActive);
-		}
-
-		if (cw->message == WM_PAINT) {
-			std::print("MC paint event omg");
-
-			PAINTSTRUCT ps;
-			HDC hdc = BeginPaint(cw->hwnd, &ps);
-
-			RECT rcClient;
-			GetClientRect(cw->hwnd, &rcClient);
-
-			auto bufferBitmap = Gdiplus::Bitmap((int)rcClient.right, (int)rcClient.bottom);
-			Gdiplus::Graphics* gBuff = Gdiplus::Graphics::FromImage(&bufferBitmap);
-
-			Render(gBuff, rcClient);
-			delete gBuff;
-
-			Gdiplus::Graphics gScreen(hdc);
-			gScreen.DrawImage(&bufferBitmap, 0, 0, rcClient.right, rcClient.bottom);
-
-			EndPaint(cw->hwnd, &ps);
-		}
-	}
-	return CallNextHookEx(OvlComps::hHook, nCode, wParam, lParam);
-}
-
 int InitOverlay()
 {
 	LoadResources();
 
 retry:
 	Sleep(16);
-	OvlComps::TargetWnd = FindWindowW(L"Bedrock", L"Minecraft");
-	if (!OvlComps::TargetWnd) {
+	OvlComps::BedrockWnd = FindWindowW(L"Bedrock", L"Minecraft");
+	if (!OvlComps::BedrockWnd) {
 		std::wcerr << L"Could not find Minecraft window.\n";
 		goto retry;
 		return 1;
 	}
 
-	if (!IsWindowVisible(OvlComps::TargetWnd))
+	if (!IsWindowVisible(OvlComps::BedrockWnd))
 		goto retry;
-	std::print("Minecraft Handle {}\n", (uintptr_t)OvlComps::TargetWnd);
-
-	OvlComps::RenderThread = GetWindowThreadProcessId(OvlComps::TargetWnd, nullptr);
-	if (!OvlComps::RenderThread)
-		goto retry;
+	std::print("Minecraft Handle {}\n", (uintptr_t)OvlComps::BedrockWnd);
 
 	SuspendGame(true);
 
-	//const wchar_t* CLS_NAME = L"LightModdingOverlay";
-	//WNDCLASSEXW wc = { sizeof(WNDCLASSEXW) };
-	//wc.lpfnWndProc = OverlayWndProc;
-	//wc.hInstance = GetModuleHandle(nullptr);
-	//wc.lpszClassName = CLS_NAME;
-	//wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
-	//wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-	//RegisterClassEx(&wc);
-	//
-	//RECT rc;
-	//GetClientRect(OvlComps::TargetWnd, &rc);
-	//OvlComps::OverlayWnd = CreateWindowExW(
-	//	WS_EX_LAYERED | WS_EX_TRANSPARENT,
-	//	CLS_NAME,
-	//	nullptr,
-	//	WS_POPUP,
-	//	0, 0,
-	//	0, 0,
-	//	nullptr,
-	//	nullptr,
-	//	GetModuleHandleW(nullptr),
-	//	nullptr);
-	//
-	//if (!OvlComps::OverlayWnd)
-	//{
-	//	std::wcerr << L"Failed to create overlay window.\n";
-	//	return 1;
-	//}
-	//
-	//SetLayeredWindowAttributes(OvlComps::OverlayWnd, 0, 255, LWA_ALPHA);
-	//SetLayeredWindowAttributes(
-	//	OvlComps::OverlayWnd,
-	//	RGB(0, 0, 0),
-	//	255,
-	//	LWA_COLORKEY);
-	//
-	//const DWM_WINDOW_CORNER_PREFERENCE cornerPref = DWMWCP_ROUND;
-	//DwmSetWindowAttribute(OvlComps::OverlayWnd, DWMWA_WINDOW_CORNER_PREFERENCE, &cornerPref, sizeof(cornerPref));
+	UpdateStatus(L"Initializing");
 
-	OvlComps::hHook = SetWindowsHookExW(
-		WH_CALLWNDPROC,
-		CallWndProcHook,
-		nullptr,
-		OvlComps::RenderThread);
-	if (!OvlComps::hHook)
-	{
-		std::wcerr << L"Failed to install hook.\n";
-		return 1;
-	}
+	CreateThread(0, 0, (LPTHREAD_START_ROUTINE)ModLoaderThread, 0, 0, 0);
 
-	//ShowWindow(OvlComps::OverlayWnd, SW_SHOW);
-	//UpdateWindow(OvlComps::OverlayWnd);
-
-	//Refresh();
-
-	InvalidateRect(OvlComps::TargetWnd, nullptr, false);
-	InvalidateRect(OvlComps::TargetWnd, nullptr, false);
-	InvalidateRect(OvlComps::TargetWnd, nullptr, false);
-	InvalidateRect(OvlComps::TargetWnd, nullptr, false);
-	InvalidateRect(OvlComps::TargetWnd, nullptr, false);
-	InvalidateRect(OvlComps::TargetWnd, nullptr, false);
-	InvalidateRect(OvlComps::TargetWnd, nullptr, false);
-	InvalidateRect(OvlComps::TargetWnd, nullptr, false);
-	InvalidateRect(OvlComps::TargetWnd, nullptr, false);
-	InvalidateRect(OvlComps::TargetWnd, nullptr, false);
-	InvalidateRect(OvlComps::TargetWnd, nullptr, false);
-	InvalidateRect(OvlComps::TargetWnd, nullptr, false);
-	InvalidateRect(OvlComps::TargetWnd, nullptr, false);
-
-	//CreateThread(0, 0, (LPTHREAD_START_ROUTINE)ModLoaderThread, 0, 0, 0);
-
-	//MSG msg;
-	//while (GetMessageW(&msg, nullptr, 0, 0))
-	//{
-	//	TranslateMessage(&msg);
-	//	DispatchMessageW(&msg);
-	//}
-	//
 	//UnhookWindowsHookEx(OvlComps::hHook);
 	return 0;
 }
