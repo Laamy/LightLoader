@@ -39,7 +39,7 @@ void Entry() {
         }
     });
 
-    GameEvents::subscribe(EventID::LoaderFinal, [](BaseEvent*) {
+    GameEvents::subscribe(EventID::Loaded, [](BaseEvent*) {
         log("Mod Loader loaded final\n");
     });
 

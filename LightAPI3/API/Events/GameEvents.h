@@ -15,7 +15,9 @@
 
 #include "BaseEvent.h"
 #include "Event/WndProcEvent.h"
-#include "Event/LoaderFinishedEvent.h"
+
+#include "Event/LoadEvent.h"
+#include "Event/ClosingEvent.h"
 
 // All events here are sigless and wont ever break
 class GAMEEVENTS_API GameEvents {

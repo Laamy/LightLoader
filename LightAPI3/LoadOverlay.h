@@ -160,7 +160,7 @@ void ModLoaderThread() {
 
 	SuspendGame(false);
 
-	LoaderFinishedEvent dispatch;
+	FinalEvent dispatch;
 	GameEvents::dispatch(&dispatch);
 }
 
@@ -183,38 +183,6 @@ void LoadResources() {
 	OvlComps::SmallMojangles = nNumFound == 0 ? new Gdiplus::Font(L"Arial", 24) : new Gdiplus::Font(&family, 24, Gdiplus::FontStyleRegular, Gdiplus::UnitPixel);
 	OvlComps::Bedrock = new Gdiplus::Bitmap(L"data\\gui\\dist\\hbui\\assets\\bedrock-20795e0a280aa8bf0ed2.png");
 	OvlComps::McSplash = new Gdiplus::Bitmap(L"MCSplashScreen.png");
-}
-
-void* __o__WndProc = nullptr;
-LRESULT CALLBACK WndProcDetour(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	//log("WndProc {}\n", uMsg);
-
-	WndProcEvent dispatch;
-	dispatch.hWnd = hWnd;
-	dispatch.Msg = uMsg;
-	dispatch.wParam = wParam;
-	dispatch.lParam = lParam;
-	GameEvents::dispatch(&dispatch);
-
-	if (dispatch.cancel)
-		return dispatch.result;
-
-	if (dispatch.result == -1)
-		return CallFunc<LRESULT, HWND, UINT, WPARAM, LPARAM>(__o__WndProc, hWnd, uMsg, wParam, lParam);
-}
-
-//anyone who makes fun of this or says u can just use setwindowshookex (no shit)
-//is stupid anyways cuz they use sigs for mouse and keymap hooks which is even stupidier
-void* __o__RegisterClassExW;
-WORD RegisterClassExWDetour(const WNDCLASSEXW* wndCls) {
-	if (wcsstr(wndCls->lpszClassName, L"Bedrock"))
-		HookFunction(reinterpret_cast<uintptr_t>(wndCls->lpfnWndProc), reinterpret_cast<void*>(WndProcDetour), &__o__WndProc);
-
-	return CallFunc<WORD, const WNDCLASSEXW*>(__o__RegisterClassExW, wndCls);
-}
-
-void InitModLoader() {
-	HookFunction((uintptr_t)&RegisterClassExW, &RegisterClassExWDetour, &__o__RegisterClassExW);
 }
 
 int InitMods()

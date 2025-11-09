@@ -75,7 +75,13 @@
     <ClInclude Include="API\Events\Event\WndProcEvent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="API\Events\Event\LoaderFinishedEvent.h">
+    <ClInclude Include="API\Events\Event\LoadEvent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Hooks\WndProcHook.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="API\Events\Event\ClosingEvent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

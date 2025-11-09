@@ -2,7 +2,8 @@
 
 enum class EventID : uint32_t {
     WndProc,
-    LoaderFinal,
+    Loaded,
+    Closing,
     EVENT_COUNT
 };
 

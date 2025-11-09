@@ -2,6 +2,7 @@
 #include "proxy.h"
 
 #include "LoadOverlay.h"
+#include "Hooks/WndProcHook.h"
 
 FILE* f;
 BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID reserved)

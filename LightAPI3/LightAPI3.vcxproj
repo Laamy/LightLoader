@@ -145,8 +145,10 @@
   <ItemGroup>
     <ClInclude Include="API\Console.h" />
     <ClInclude Include="API\Events\BaseEvent.h" />
-    <ClInclude Include="API\Events\Event\LoaderFinishedEvent.h" />
+    <ClInclude Include="API\Events\Event\LoadEvent.h" />
+    <ClInclude Include="API\Events\Event\ClosingEvent.h" />
     <ClInclude Include="API\Events\Event\WndProcEvent.h" />
+    <ClInclude Include="Hooks\WndProcHook.h" />
     <ClInclude Include="API\Events\GameEvents.h" />
     <ClInclude Include="API\FileIO.h" />
     <ClInclude Include="API\GameConfig.h" />
