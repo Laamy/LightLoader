@@ -6,6 +6,7 @@
 #include <print>
 #include <filesystem>
 #include <queue>
+#include <fstream>
 #include <tlhelp32.h>
 
 #include <dwmapi.h>
@@ -35,6 +36,26 @@ namespace OvlComps {
 	const fs::path mods_dir = "mods";
 }
 
+std::string extractVersion() {
+	fs::path filePath = "appxmanifest.xml";
+	std::ifstream file(filePath);
+	std::string xml((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	file.close();
+
+	std::string versionKey = "Version=\"";
+	size_t start = xml.find(versionKey);
+
+	if (start != std::string::npos) {
+		start += versionKey.length();
+		size_t end = xml.find("\"", start);
+		if (end != std::string::npos) {
+			return xml.substr(start, end - start);
+		}
+	}
+
+	return "INVALID";
+}
+
 void SuspendGame(bool suspend)
 {
 	DWORD pid = GetCurrentProcessId();
@@ -60,8 +81,8 @@ void SuspendGame(bool suspend)
 			if (SUCCEEDED(GetThreadDescription(hThread, &pDesc)) && pDesc) {
 				if (wcsstr(pDesc, L"IO Thread") != nullptr) // this thread sets up the game grr
 					match = true;
-				if (lstrlenW(pDesc) <= 3)
-					match = true; // starts d3d threads & window message loop but loading libraries freezes the message loop anyways so i dont care
+				//if (lstrlenW(pDesc) <= 3)
+				//	match = true; // starts d3d threads & window message loop but loading libraries freezes the message loop anyways so i dont care
 				LocalFree(pDesc);
 			}
 
@@ -83,13 +104,11 @@ void SuspendGame(bool suspend)
 }
 
 void Render(Gdiplus::Graphics* g, const RECT& rcClient);
-
 // bro i dont care if it updates or not anymore fuck it
 std::wstring status = L"Initializing";
 void UpdateStatus(std::wstring wstr) {
 	status = wstr;
 
-	std::print("MC paint event omg\n");
 	PAINTSTRUCT ps;
 	HDC hdc = BeginPaint(OvlComps::BedrockWnd, &ps);
 
@@ -106,56 +125,6 @@ void UpdateStatus(std::wstring wstr) {
 	gScreen.DrawImage(&bufferBitmap, 0, 0, rcClient.right, rcClient.bottom);
 
 	EndPaint(OvlComps::BedrockWnd, &ps);
-
-	UpdateWindow(OvlComps::BedrockWnd);
-}
-
-void ModLoaderThread() {
-	if (!fs::exists(OvlComps::mods_dir) || !fs::is_directory(OvlComps::mods_dir))
-		fs::create_directory(OvlComps::mods_dir);
-
-	UpdateStatus(L"Loading");
-
-	// NOTE: it is not safe to load multiple mods at the same time
-	for (const auto& entry : fs::directory_iterator(OvlComps::mods_dir)) {
-		if (entry.is_regular_file() && entry.path().extension() == ".dll") {
-			auto mod = entry.path().string();
-
-			UpdateStatus(L"Loading " + entry.path().stem().wstring());
-			auto hMod = LoadLibraryA(mod.c_str());
-			hMod == NULL ? std::print("Failed to load {} - error code {}\n", mod, GetLastError()) :
-				std::print("Loaded {}\n", mod);
-		}
-	}
-
-	SuspendGame(false);
-
-	delete OvlComps::McSplash;
-	delete OvlComps::Bedrock;
-	delete OvlComps::LargeMojangles;
-	delete OvlComps::SmallMojangles;
-	delete OvlComps::pfc;
-}
-
-// before we do anything tbf
-void LoadResources() {
-	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
-	ULONG_PTR gdiplusToken;
-	if (Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL) != Gdiplus::Ok)
-		std::print("GDI+ failed to initialize\n");
-
-	OvlComps::pfc = new Gdiplus::PrivateFontCollection();
-	if (OvlComps::pfc->AddFontFile(L"data\\fonts\\Mojangles.ttf") != Gdiplus::Ok)
-		std::print("failed to add mojangles font file");
-	
-	Gdiplus::FontFamily family;
-	int nNumFound = 0;
-	OvlComps::pfc->GetFamilies(1, &family, &nNumFound);
-
-	OvlComps::LargeMojangles = nNumFound == 0 ? new Gdiplus::Font(L"Arial", 32) : new Gdiplus::Font(&family, 32, Gdiplus::FontStyleRegular, Gdiplus::UnitPixel);
-	OvlComps::SmallMojangles = nNumFound == 0 ? new Gdiplus::Font(L"Arial", 24) : new Gdiplus::Font(&family, 24, Gdiplus::FontStyleRegular, Gdiplus::UnitPixel);
-	OvlComps::Bedrock = new Gdiplus::Bitmap(L"data\\gui\\dist\\hbui\\assets\\bedrock-20795e0a280aa8bf0ed2.png");
-	OvlComps::McSplash = new Gdiplus::Bitmap(L"MCSplashScreen.png");
 }
 
 void Render(Gdiplus::Graphics* g, const RECT& rcClient) {
@@ -175,32 +144,118 @@ void Render(Gdiplus::Graphics* g, const RECT& rcClient) {
 	// actual progress crap
 	Gdiplus::RectF mrs;
 	g->MeasureString(status.c_str(), -1, OvlComps::SmallMojangles, { 0, 0 }, &mrs);
-	g->DrawString(status.c_str(), -1, OvlComps::SmallMojangles, Gdiplus::PointF((rcClient.right / 2) - (mrs.Width/2), 225), nullptr, &textBrush);
+	g->DrawString(status.c_str(), -1, OvlComps::SmallMojangles, Gdiplus::PointF((rcClient.right / 2) - (mrs.Width / 2), 225), nullptr, &textBrush);
 }
 
-int InitOverlay()
-{
-	LoadResources();
+void ModLoaderThread() {
+	if (!fs::exists(OvlComps::mods_dir) || !fs::is_directory(OvlComps::mods_dir))
+		fs::create_directory(OvlComps::mods_dir);
 
-retry:
-	Sleep(16);
-	OvlComps::BedrockWnd = FindWindowW(L"Bedrock", L"Minecraft");
-	if (!OvlComps::BedrockWnd) {
-		std::wcerr << L"Could not find Minecraft window.\n";
-		goto retry;
-		return 1;
+	UpdateStatus(L"Loading");
+
+	// NOTE: it is not safe to load multiple mods at the same time
+	for (const auto& entry : fs::directory_iterator(OvlComps::mods_dir)) {
+		if (entry.is_regular_file() && entry.path().extension() == ".dll") {
+			auto mod = entry.path().string();
+
+			UpdateStatus(L"Loading " + entry.path().stem().wstring());
+			auto hMod = LoadLibraryA(mod.c_str());
+			hMod == NULL ? log("Failed to load {} - error code {}\n", mod, GetLastError()) :
+				log("Loaded {}\n", mod);
+		}
 	}
 
-	if (!IsWindowVisible(OvlComps::BedrockWnd))
-		goto retry;
-	std::print("Minecraft Handle {}\n", (uintptr_t)OvlComps::BedrockWnd);
+	// a mod could override the title
+	char* curTxt = new char[256];
+	GetWindowTextA(OvlComps::BedrockWnd, curTxt, 256);
 
+	if (strcmp(curTxt, "Minecraft") == 0)
+		SetWindowTextA(OvlComps::BedrockWnd, std::format("Minecraft {}", extractVersion()).c_str());
+
+	delete OvlComps::McSplash;
+	delete OvlComps::Bedrock;
+	delete OvlComps::LargeMojangles;
+	delete OvlComps::SmallMojangles;
+	delete OvlComps::pfc;
+
+	SuspendGame(false);
+}
+
+// before we do anything tbf
+void LoadResources() {
+	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+	ULONG_PTR gdiplusToken;
+	if (Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL) != Gdiplus::Ok)
+		log("GDI+ failed to initialize\n");
+
+	OvlComps::pfc = new Gdiplus::PrivateFontCollection();
+	if (OvlComps::pfc->AddFontFile(L"data\\fonts\\Mojangles.ttf") != Gdiplus::Ok)
+		log("failed to add mojangles font file\n");
+	
+	Gdiplus::FontFamily family;
+	int nNumFound = 0;
+	OvlComps::pfc->GetFamilies(1, &family, &nNumFound);
+
+	OvlComps::LargeMojangles = nNumFound == 0 ? new Gdiplus::Font(L"Arial", 32) : new Gdiplus::Font(&family, 32, Gdiplus::FontStyleRegular, Gdiplus::UnitPixel);
+	OvlComps::SmallMojangles = nNumFound == 0 ? new Gdiplus::Font(L"Arial", 24) : new Gdiplus::Font(&family, 24, Gdiplus::FontStyleRegular, Gdiplus::UnitPixel);
+	OvlComps::Bedrock = new Gdiplus::Bitmap(L"data\\gui\\dist\\hbui\\assets\\bedrock-20795e0a280aa8bf0ed2.png");
+	OvlComps::McSplash = new Gdiplus::Bitmap(L"MCSplashScreen.png");
+}
+
+void* __o__WndProc = nullptr;
+LRESULT CALLBACK WndProcDetour(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	//log("WndProc {}\n", uMsg);
+
+	switch (uMsg) {
+	case WM_SYSKEYDOWN:
+	case WM_KEYDOWN:
+	{
+		UINT vk = static_cast<UINT>(wParam);
+		log("Key {} down\n", vk);
+	}
+		break;
+
+	case WM_SYSKEYUP:
+	case WM_KEYUP:
+	{
+		UINT vk = static_cast<UINT>(wParam);
+		log("Key {} up\n", vk);
+	}
+	break;
+
+	case WM_MOUSEMOVE:
+	{
+		int x = LOWORD(lParam);
+		int y = HIWORD(lParam);
+		log("Mouse move {}, {}\n", x, y);
+	}
+	break;
+	}
+
+	return CallFunc<LRESULT, HWND, UINT, WPARAM, LPARAM>(__o__WndProc, hWnd, uMsg, wParam, lParam);
+}
+
+void* __o__RegisterClassExW;
+WORD RegisterClassExWDetour(const WNDCLASSEXW* wndCls) {
+	if (wcsstr(wndCls->lpszClassName, L"Bedrock"))
+		HookFunction(reinterpret_cast<uintptr_t>(wndCls->lpfnWndProc), reinterpret_cast<void*>(WndProcDetour), &__o__WndProc);
+
+	return CallFunc<WORD, const WNDCLASSEXW*>(__o__RegisterClassExW, wndCls);
+}
+
+void InitModLoader() {
+	HookFunction((uintptr_t)&RegisterClassExW, &RegisterClassExWDetour, &__o__RegisterClassExW);
+}
+
+int InitMods()
+{
+	while (!IsWindowVisible(OvlComps::BedrockWnd)) {
+		Sleep(0);
+		OvlComps::BedrockWnd = FindWindowW(L"Bedrock", NULL);
+	}
 	SuspendGame(true);
-
 	UpdateStatus(L"Initializing");
 
 	CreateThread(0, 0, (LPTHREAD_START_ROUTINE)ModLoaderThread, 0, 0, 0);
-
-	//UnhookWindowsHookEx(OvlComps::hHook);
 	return 0;
 }
