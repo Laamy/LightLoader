@@ -6,26 +6,27 @@
 FILE* f;
 BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID reserved)
 {
-    static bool init = false;
-    if (!init) {
-        init = true;
-        DllProxy::Initialize();
-        AllocConsole();
-        freopen_s(&f, "CONOUT$", "w", stdout);
-        SetConsoleTitleA("LightAPI V3"); // bruh
+	static std::once_flag initFlag;
+	std::call_once(initFlag, [] {
+		DllProxy::Initialize();
+		AllocConsole();
+		freopen_s(&f, "CONOUT$", "w", stdout);
+		SetConsoleTitleA("LightAPI V3"); // bruh
 
-        // basics just incase it crashes
-        {
-            log("-----------------------------------\n");
-            log("Minecraft {}\n", extractVersion());
-            log("-----------------------------------\n");
-        }
+		// basics just incase it crashes
+		{
+			log("-----------------------------------\n");
+			log("Minecraft {}\n", GameConfig::getMinecraftFolderA());
+			//log("OS: {}\n", GetOS());
+			log("-----------------------------------\n");
+		}
 
-        LoadResources();
+		LoadResources();
 
-        InitModLoader();
+		InitModLoader();
 
-        CreateThread(0, 0, (LPTHREAD_START_ROUTINE)InitMods, 0, 0, 0);
-    }
-    return TRUE;
+		CreateThread(0, 0, (LPTHREAD_START_ROUTINE)InitMods, 0, 0, 0);
+	});
+
+	return TRUE;
 }

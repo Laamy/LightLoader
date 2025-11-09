@@ -12,17 +12,22 @@
 #include <sstream>
 #include <Psapi.h>
 
-static std::ofstream logFile("LightLoader.log", std::ios::app);
+#include "API/Console.h"
 
 template <typename... Args>
 void log(std::format_string<Args...> fmt, Args&&... args) {
     std::string msg = std::format(fmt, std::forward<Args>(args)...);
 
     std::cout << msg << std::flush;
-    if (logFile.is_open()) {
-        logFile << msg << std::flush;
+    if (Console::logFile.is_open()) {
+        Console::logFile << msg << std::flush;
     }
 }
+
+#include "API/GameConfig.h"
+#include "API/FileIO.h"
+
+#include "API/Events/GameEvents.h"
 
 #include "Libs/minhook/minhook.h"
 

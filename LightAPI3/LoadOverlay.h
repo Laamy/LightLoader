@@ -36,26 +36,6 @@ namespace OvlComps {
 	const fs::path mods_dir = "mods";
 }
 
-std::string extractVersion() {
-	fs::path filePath = "appxmanifest.xml";
-	std::ifstream file(filePath);
-	std::string xml((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-	file.close();
-
-	std::string versionKey = "Version=\"";
-	size_t start = xml.find(versionKey);
-
-	if (start != std::string::npos) {
-		start += versionKey.length();
-		size_t end = xml.find("\"", start);
-		if (end != std::string::npos) {
-			return xml.substr(start, end - start);
-		}
-	}
-
-	return "INVALID";
-}
-
 void SuspendGame(bool suspend)
 {
 	DWORD pid = GetCurrentProcessId();
@@ -170,7 +150,7 @@ void ModLoaderThread() {
 	GetWindowTextA(OvlComps::BedrockWnd, curTxt, 256);
 
 	if (strcmp(curTxt, "Minecraft") == 0)
-		SetWindowTextA(OvlComps::BedrockWnd, std::format("Minecraft {}", extractVersion()).c_str());
+		SetWindowTextW(OvlComps::BedrockWnd, std::format(L"Minecraft {}", GameConfig::getGameVersionW()).c_str());
 
 	delete OvlComps::McSplash;
 	delete OvlComps::Bedrock;
@@ -179,6 +159,9 @@ void ModLoaderThread() {
 	delete OvlComps::pfc;
 
 	SuspendGame(false);
+
+	LoaderFinishedEvent dispatch;
+	GameEvents::dispatch(&dispatch);
 }
 
 // before we do anything tbf
@@ -206,35 +189,22 @@ void* __o__WndProc = nullptr;
 LRESULT CALLBACK WndProcDetour(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	//log("WndProc {}\n", uMsg);
 
-	switch (uMsg) {
-	case WM_SYSKEYDOWN:
-	case WM_KEYDOWN:
-	{
-		UINT vk = static_cast<UINT>(wParam);
-		log("Key {} down\n", vk);
-	}
-		break;
+	WndProcEvent dispatch;
+	dispatch.hWnd = hWnd;
+	dispatch.Msg = uMsg;
+	dispatch.wParam = wParam;
+	dispatch.lParam = lParam;
+	GameEvents::dispatch(&dispatch);
 
-	case WM_SYSKEYUP:
-	case WM_KEYUP:
-	{
-		UINT vk = static_cast<UINT>(wParam);
-		log("Key {} up\n", vk);
-	}
-	break;
+	if (dispatch.cancel)
+		return dispatch.result;
 
-	case WM_MOUSEMOVE:
-	{
-		int x = LOWORD(lParam);
-		int y = HIWORD(lParam);
-		log("Mouse move {}, {}\n", x, y);
-	}
-	break;
-	}
-
-	return CallFunc<LRESULT, HWND, UINT, WPARAM, LPARAM>(__o__WndProc, hWnd, uMsg, wParam, lParam);
+	if (dispatch.result == -1)
+		return CallFunc<LRESULT, HWND, UINT, WPARAM, LPARAM>(__o__WndProc, hWnd, uMsg, wParam, lParam);
 }
 
+//anyone who makes fun of this or says u can just use setwindowshookex (no shit)
+//is stupid anyways cuz they use sigs for mouse and keymap hooks which is even stupidier
 void* __o__RegisterClassExW;
 WORD RegisterClassExWDetour(const WNDCLASSEXW* wndCls) {
 	if (wcsstr(wndCls->lpszClassName, L"Bedrock"))

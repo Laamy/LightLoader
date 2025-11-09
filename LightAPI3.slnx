@@ -3,5 +3,8 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Folder Name="/Samples/">
+    <Project Path="Samples/KeymapMod/KeymapMod.vcxproj" Id="19f4f057-ec1c-402a-a9ea-ad3d9625647c" />
+  </Folder>
   <Project Path="LightAPI3/LightAPI3.vcxproj" Id="45578550-12a8-438c-9553-ade9c4fa426e" />
 </Solution>
