@@ -1,3 +1,3 @@
 #include "Console.h"
 
-std::ofstream Console::logFile("LightLoader.log", std::ios::app);
+std::ofstream Console::logFile("LightLoader.log", std::ios::trunc);

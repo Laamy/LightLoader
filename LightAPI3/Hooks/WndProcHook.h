@@ -2,7 +2,7 @@
 
 void* __o__WndProc = nullptr;
 LRESULT CALLBACK WndProcDetour(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	if (uMsg == WM_CLOSE || uMsg == WM_QUIT) {
+	if (uMsg == WM_CLOSE || uMsg == WM_QUIT) {// || uMsg == WM_NCDESTROY
 		ClosingEvent dispatch;
 		GameEvents::dispatch(&dispatch);
 	}

@@ -160,7 +160,7 @@ void ModLoaderThread() {
 
 	SuspendGame(false);
 
-	FinalEvent dispatch;
+	LoadEvent dispatch;
 	GameEvents::dispatch(&dispatch);
 }
 

@@ -4,6 +4,13 @@
 #include "LoadOverlay.h"
 #include "Hooks/WndProcHook.h"
 
+void ConsoleHandler(DWORD signal) {
+	if (signal == CTRL_CLOSE_EVENT) {
+		ClosingEvent dispatch;
+		GameEvents::dispatch(&dispatch);
+	}
+}
+
 FILE* f;
 BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID reserved)
 {
@@ -14,10 +21,12 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID reserved)
 		freopen_s(&f, "CONOUT$", "w", stdout);
 		SetConsoleTitleA("LightAPI V3"); // bruh
 
+		SetConsoleCtrlHandler((PHANDLER_ROUTINE)ConsoleHandler, TRUE);//grr
+
 		// basics just incase it crashes
 		{
 			log("-----------------------------------\n");
-			log("Minecraft {}\n", GameConfig::getMinecraftFolderA());
+			log("Minecraft {}\n", GameConfig::getGameVersionA());
 			//log("OS: {}\n", GetOS());
 			log("-----------------------------------\n");
 		}

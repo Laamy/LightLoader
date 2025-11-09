@@ -4,6 +4,7 @@
 #include <FileIO.h>
 #include <Console.h>
 
+// feel free to ignore the log file and use console like normal
 template <typename... Args>
 void log(std::format_string<Args...> fmt, Args&&... args) {
     std::string msg = std::format(fmt, std::forward<Args>(args)...);
@@ -15,10 +16,13 @@ void log(std::format_string<Args...> fmt, Args&&... args) {
 }
 
 void Entry() {
+    // initalize mods folder under this name
     FileIO io("KeymapMod");
 
     GameEvents::subscribe(EventID::WndProc, [](BaseEvent* _event) {
         auto event = reinterpret_cast<WndProcEvent*>(_event);
+
+        //log("Msg {}", event->Msg);
 
         switch (event->Msg) {
         case WM_KEYDOWN:
@@ -40,7 +44,11 @@ void Entry() {
     });
 
     GameEvents::subscribe(EventID::Loaded, [](BaseEvent*) {
-        log("Mod Loader loaded final\n");
+        log("Mod Loader final\n");
+    });
+
+    GameEvents::subscribe(EventID::Closing, [](BaseEvent*) {
+        log("Game quit called\n");
     });
 
     log("KeymapMod sample loaded\n");
