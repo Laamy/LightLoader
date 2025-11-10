@@ -24,6 +24,7 @@
     <ProjectGuid>{45578550-12a8-438c-9553-ade9c4fa426e}</ProjectGuid>
     <RootNamespace>LightAPI3</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>LightLoader</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
