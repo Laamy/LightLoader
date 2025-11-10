@@ -2,8 +2,10 @@
 
 #include "API/Events/GameEventsUt.h"
 
-void Entry() {
+#include "Hooks/RakNetHook.h"
 
+void Entry() {
+    InitRakNetHook();
 }
 
 BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID reserved)

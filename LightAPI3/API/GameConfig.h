@@ -7,12 +7,12 @@
 #include <shlobj.h>
 
 #ifdef LIGHT_EXPORTS
-#define NATIVECORE_API __declspec(dllexport)
+#define GAMECONFIG_API __declspec(dllexport)
 #else
-#define NATIVECORE_API __declspec(dllimport)
+#define GAMECONFIG_API __declspec(dllimport)
 #endif
 
-class NATIVECORE_API GameConfig {
+class GAMECONFIG_API GameConfig {
 public: // some misc things
 	static HWND getWindow();
 

@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include <Events/GameEvents.h>
+#include <Events/GameEventsUt.h>
 #include <FileIO.h>
 #include <Console.h>
 
@@ -18,6 +18,9 @@ void log(std::format_string<Args...> fmt, Args&&... args) {
 void Entry() {
     // initalize mods folder under this name
     FileIO io("KeymapMod");
+
+    // ensure required libraries are loaded
+    LoadLibraryW(L"LightUt.dll");
 
     GameEvents::subscribe(EventID::WndProc, [](BaseEvent* _event) {
         auto event = reinterpret_cast<WndProcEvent*>(_event);
@@ -41,6 +44,12 @@ void Entry() {
             log("Mouse moved {}, {}\n", x, y);
             break;
         }
+    });
+
+    GameEvents::subscribe((EventID)EventIDUt::RakNetSendToServer, [](BaseEvent* _event) {
+        auto event = reinterpret_cast<RakNetSendToServer*>(_event);
+
+        log("Packet {} sent\n", event->Packet->getName());
     });
 
     GameEvents::subscribe(EventID::Loaded, [](BaseEvent*) {

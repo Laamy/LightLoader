@@ -149,6 +149,7 @@
     <ClInclude Include="API\Events\Event\LoadEvent.h" />
     <ClInclude Include="API\Events\Event\ClosingEvent.h" />
     <ClInclude Include="API\Events\Event\WndProcEvent.h" />
+    <ClInclude Include="API\NativeCore.h" />
     <ClInclude Include="Hooks\WndProcHook.h" />
     <ClInclude Include="API\Events\GameEvents.h" />
     <ClInclude Include="API\FileIO.h" />
@@ -173,6 +174,7 @@
     <ClCompile Include="API\Events\GameEvents.cpp" />
     <ClCompile Include="API\FileIO.cpp" />
     <ClCompile Include="API\GameConfig.cpp" />
+    <ClCompile Include="API\NativeCore.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Libs\minhook\buffer.c" />
     <ClCompile Include="Libs\minhook\hde\hde32.c" />

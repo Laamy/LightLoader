@@ -26,11 +26,11 @@ LRESULT CALLBACK WndProcDetour(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 void* __o__RegisterClassExW;
 WORD RegisterClassExWDetour(const WNDCLASSEXW* wndCls) {
 	if (wcsstr(wndCls->lpszClassName, L"Bedrock"))
-		HookFunction(reinterpret_cast<uintptr_t>(wndCls->lpfnWndProc), reinterpret_cast<void*>(WndProcDetour), &__o__WndProc);
+		NativeCore::hookFunction(reinterpret_cast<uintptr_t>(wndCls->lpfnWndProc), reinterpret_cast<void*>(WndProcDetour), &__o__WndProc);
 
 	return CallFunc<WORD, const WNDCLASSEXW*>(__o__RegisterClassExW, wndCls);
 }
 
 void InitModLoader() {
-	HookFunction((uintptr_t)&RegisterClassExW, &RegisterClassExWDetour, &__o__RegisterClassExW);
+	NativeCore::hookFunction((uintptr_t)&RegisterClassExW, &RegisterClassExWDetour, &__o__RegisterClassExW);
 }
