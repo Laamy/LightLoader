@@ -5,6 +5,9 @@
 #include <shlobj.h>
 #include <filesystem>
 #include <mutex>
+#include <map>
+
+#include "Structs/IniBuilder.h"
 
 namespace fs = std::filesystem;
 
@@ -27,6 +30,8 @@ public:
 
     std::wstring getClientPathW();
     std::string getClientPathA();
+
+    IniBuilder getIniStream(std::string path);
 
 public:
     FileIO() = default;

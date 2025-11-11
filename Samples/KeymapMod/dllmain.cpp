@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include <print>
+
 #include <Events/GameEventsUt.h>
 #include <FileIO.h>
 #include <Console.h>
@@ -15,10 +17,9 @@ void log(std::format_string<Args...> fmt, Args&&... args) {
     }
 }
 
+// initalize mod folder under this name
+FileIO io("KeymapMod");
 void Entry() {
-    // initalize mods folder under this name
-    FileIO io("KeymapMod");
-
     // ensure required libraries are loaded
     LoadLibraryW(L"LightUt.dll");
 
@@ -53,6 +54,14 @@ void Entry() {
     });
 
     GameEvents::subscribe(EventID::Loaded, [](BaseEvent*) {
+        auto ini = io.getIniStream("test.ini");
+
+        auto v1 = ini.GetOrDefault("TextThing", std::string("Hello, World!"));
+        std::print("TextThing {}\n", v1);
+
+        auto v2 = ini.GetOrDefault("FloatThing", 1.f);
+        std::print("FloatThing {}\n", v2);
+
         log("Mod Loader final\n");
     });
 

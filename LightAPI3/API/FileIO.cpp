@@ -43,3 +43,8 @@ std::string FileIO::getClientPathA()
 {
     return wstring_to_utf8(getClientPathW());
 }
+
+IniBuilder FileIO::getIniStream(std::string path)
+{
+    return IniBuilder(this->getClientPathA(), path);
+}
