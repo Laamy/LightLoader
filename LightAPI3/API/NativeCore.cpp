@@ -1,5 +1,4 @@
 #include "NativeCore.h"
-#include "../Libs/minhook/minhook.h"
 
 static uintptr_t range_start = (uintptr_t)GetModuleHandleW(L"Minecraft.Windows.exe");
 
