@@ -12,14 +12,31 @@
 #define NATIVECORE_API __declspec(dllimport)
 #endif
 
-class NATIVECORE_API NativeCore {
-private:
-    static inline std::unordered_map<uintptr_t, int> hookIds{};
+using HookID = size_t;
 
+class NATIVECORE_API NativeCore {
 public: // some misc things
     static uintptr_t findSig(const char* sig);
 
-    // HookFunction so minhook isnt essential to install into mods (also i want to multiplex them later)
-    static bool hookFunction(uintptr_t address, void* hook, void** original);
-    static bool unhookFunction(uintptr_t address);
+    // Returns a HookID you can use to call unhookFunction
+    static HookID hookFunction(uintptr_t address, void* hook, void** original);
+    static bool unhookFunction(HookID hook);
+
 };
+
+#ifndef LIGHT_EXPORTS
+
+// forwarded from polyhook
+namespace PLH {
+    template<typename FnCastTo>
+    FnCastTo FnCast(uint64_t fnToCast, FnCastTo) {
+        return (FnCastTo)fnToCast;
+    }
+
+    template<typename FnCastTo>
+    FnCastTo FnCast(void* fnToCast, FnCastTo) {
+        return (FnCastTo)fnToCast;
+    }
+}
+
+#endif

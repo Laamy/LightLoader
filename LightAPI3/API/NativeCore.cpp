@@ -72,44 +72,47 @@ uintptr_t NativeCore::findSig(const char* sig)
     return 0;
 }
 
+#include <polyhook2/IHook.hpp>
+#include <polyhook2/Detour/NatDetour.hpp>
 
-// HookFunction so minhook isnt essential to install into mods (also i want to multiplex them later)
-bool NativeCore::hookFunction(uintptr_t address, void* hook, void** original)
+// my intelisense died here
+std::unordered_map<size_t, std::unique_ptr<PLH::NatDetour>> hooks_;
+size_t nextId_ = 1;
+std::mutex mtx_;
+
+HookID NativeCore::hookFunction(uintptr_t address, void* hook, void** original)
 {
-    static std::once_flag initFlag;
-    std::call_once(initFlag, MH_Initialize);
+    auto detour = std::make_unique<PLH::NatDetour>(
+        address,
+        (uintptr_t)hook,
+        (uintptr_t*)original);
 
-    if (hookIds.find(address) == hookIds.end())
-        hookIds[address] = 0;
-
-    auto hookID = hookIds[address]++;
-
-    if (MH_CreateHookEx(hookID, reinterpret_cast<LPVOID>(address), hook, original) != MH_OK) {
+    if (!detour->hook()) {
         std::print("Failed to create hook {:#X}\n", address);
-        //Console::Log("NativeCore", "Failed to create hook for address: 0x%p", address);
-        return false;
+        return 0;
     }
 
-    if (MH_EnableHookEx(hookID, reinterpret_cast<LPVOID>(address)) != MH_OK) {
-        std::print("Failed to enable hook {:#X}\n", address);
-        //Console::Log("NativeCore", "Failed to enable hook for address: 0x%p", address);
-        return false;
-    }
-
-    return true;
+    std::lock_guard<std::mutex> lock(mtx_);
+    size_t id = nextId_++;
+    hooks_.emplace(id, std::move(detour));
+    return id;
 }
 
-bool NativeCore::unhookFunction(uintptr_t address)
+bool NativeCore::unhookFunction(HookID hook)
 {
-    if (MH_DisableHook(reinterpret_cast<LPVOID>(address)) != MH_OK) {
-        std::print("Failed to disable hook for address: {:#X}\n", address);
+    std::lock_guard<std::mutex> lock(mtx_);
+
+    auto it = hooks_.find(hook);
+    if (it == hooks_.end()) {
+        std::print("No hook found for ID {}\n", hook);
         return false;
     }
 
-    if (MH_RemoveHook(reinterpret_cast<LPVOID>(address)) != MH_OK) {
-        std::print("Failed to remove hook for address: {:#X}\n", address);
+    if (!it->second->unHook()) {
+        std::print("Failed to disable hook ID {}\n", hook);
         return false;
     }
 
+    hooks_.erase(it);
     return true;
 }

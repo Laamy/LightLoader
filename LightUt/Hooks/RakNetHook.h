@@ -11,7 +11,7 @@ void SendPacketDetour(void* loopbackSender, Packet* packet)
     if (dispatch.cancel)
         return;
 
-    CallFunc<void, void*, void*>(__o__sendPacket, loopbackSender, packet);
+    PLH::FnCast(__o__sendPacket, &SendPacketDetour)(loopbackSender, packet);
 }
 
 void InitRakNetHook() {
