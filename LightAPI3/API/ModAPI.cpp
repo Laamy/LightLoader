@@ -5,7 +5,7 @@ inline bool ModAPI::LoadDependencyW(std::wstring dll) {
     auto res = LoadLibraryW(std::format(L"mods\\{}", dll).c_str());
 
 	if (res == NULL) {
-		std::printf("Failed to load library {}, GetLastError; 0x{:#x}", dll, GetLastError());
+        std::wcout << std::format(L"Failed to load library {}, GetLastError; 0x{:#x}\n", dll, GetLastError());
 		return false;
 	}
 	return true;
@@ -16,24 +16,26 @@ inline bool ModAPI::LoadDependencyA(std::string dll) {
 }
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
-bool ModAPI::LoadDependenciesW(std::vector<std::wstring> dlls)
+std::vector<std::wstring> ModAPI::LoadDependenciesW(std::vector<std::wstring> dlls)
 {
-    size_t size = ARRAY_SIZE(dlls);
+    std::vector<std::wstring> result;
 
-    for (size_t i = 0; i < size; ++i)
-        if (!LoadDependencyW(dlls[i]))
-            return false;
-    return true;
+    for (auto dll : dlls)
+        if (!LoadDependencyW(dll))
+            result.push_back(dll);
+
+    return result;
 }
 
-bool ModAPI::LoadDependenciesA(std::vector<std::string> dlls)
+std::vector<std::string> ModAPI::LoadDependenciesA(std::vector<std::string> dlls)
 {
-    size_t size = ARRAY_SIZE(dlls);
+    std::vector<std::string> result;
 
-    for (size_t i = 0; i < size; ++i)
-        if (!LoadDependencyA(dlls[i]))
-            return false;
-    return true;
+    for (auto dll : dlls)
+        if (!LoadDependencyA(dll))
+            result.push_back(dll);
+
+    return result;
 }
 
 std::string ModAPI::HasError()
