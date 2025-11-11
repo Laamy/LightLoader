@@ -140,7 +140,15 @@ void ModLoaderThread() {
 
 			UpdateStatus(L"Loading " + entry.path().stem().wstring());
 			auto hMod = LoadLibraryA(mod.c_str());
-			hMod == NULL ? log("Failed to load {} - error code {}\n", mod, GetLastError()) :
+
+			auto er = ModAPI::HasError();
+			if (strlen(er.c_str()) > 1) {
+				log("[{}, ERROR] {}\n", mod, er);
+				ModAPI::Error("");
+				continue;
+			}
+
+			(hMod == NULL) ? log("Failed to load {} - error code {:#X}\n", mod, GetLastError()) :
 				log("Loaded {}\n", mod);
 		}
 	}

@@ -5,6 +5,7 @@
 #include <Events/GameEventsUt.h>
 #include <FileIO.h>
 #include <Console.h>
+#include <ModAPI.h>
 
 // feel free to ignore the log file and use console like normal
 template <typename... Args>
@@ -21,7 +22,8 @@ void log(std::format_string<Args...> fmt, Args&&... args) {
 FileIO io("KeymapMod");
 void Entry() {
     // ensure required libraries are loaded
-    LoadLibraryW(L"LightUt.dll");
+    if (!ModAPI::LoadDependenciesW({ L"LightUt.dll" }))
+        return ModAPI::Error("Unable to load dependencies");
 
     GameEvents::subscribe(EventID::WndProc, [](BaseEvent* _event) {
         auto event = reinterpret_cast<WndProcEvent*>(_event);

@@ -27,6 +27,7 @@ void log(std::format_string<Args...> fmt, Args&&... args) {
 #include "API/NativeCore.h"
 #include "API/GameConfig.h"
 #include "API/FileIO.h"
+#include "API/ModAPI.h"
 
 #include "API/Events/GameEvents.h"
 
