@@ -13,3 +13,9 @@ unzip it and then put mods in the mods folder
 All minecraft mods written for the mod loader *should* write its configs and other assets to its own folder in `.\Minecraft Bedrock\mods`</br>
 to dumb it down press Win+R on your keyboard (Windows key) and enter this `%appdata%\Minecraft Bedrock\mods`</br>
 mods only generate configurations when they've been run atleast once
+
+# Images
+
+I might scratch this but you get a funny splash screen while mods are being loaded</br>
+<img width="732" height="474" alt="image" src="https://github.com/user-attachments/assets/201c9988-b8ba-4085-9d60-ff991ff18527" />
+
