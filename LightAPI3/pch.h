@@ -31,7 +31,8 @@ void log(std::format_string<Args...> fmt, Args&&... args) {
 
 #include "API/Events/GameEvents.h"
 
-#include "MemoryUtils.h"
+template <typename R, typename... Args>
+R CallFunc(void* func, Args... args) { return ((R(*)(Args...))func)(args...); }
 
 #define LIGHTAPI_VERSION L"LightLoader v1.1.0"
 

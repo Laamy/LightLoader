@@ -4,11 +4,10 @@
 inline bool ModAPI::LoadDependencyW(std::wstring dll) {
     auto res = LoadLibraryW(std::format(L"mods\\{}", dll).c_str());
 
-	if (res == NULL) {
-        std::wcout << std::format(L"Failed to load library {}, GetLastError; 0x{:#x}\n", dll, GetLastError());
-		return false;
-	}
-	return true;
+    if (res != NULL) return true;
+
+    std::wcout << std::format(L"Failed to load library {}, GetLastError; 0x{:#x}\n", dll, GetLastError());
+    return false;
 }
 
 inline bool ModAPI::LoadDependencyA(std::string dll) {

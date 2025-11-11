@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <print>
 #include <Psapi.h>
+#include "../Libs/minhook/minhook.h"
 
 #ifdef LIGHT_EXPORTS
 #define NATIVECORE_API __declspec(dllexport)

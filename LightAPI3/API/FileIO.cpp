@@ -19,10 +19,12 @@ bool FileIO::setupClientPathW(std::wstring clientName)
 {
     if (clientName.empty())
         throw std::invalid_argument("Client name is empty, please provide a valid name.");
+
     name = clientName;
 
     if (!fs::exists(getClientPathW()))
         return fs::create_directory(getClientPathW());
+
     return false;
 }
 

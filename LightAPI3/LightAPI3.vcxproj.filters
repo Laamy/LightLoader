@@ -48,9 +48,6 @@
     <ClInclude Include="Libs\QuickDllProxy\DllProxy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MemoryUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="LoadOverlay.h">
       <Filter>Header Files</Filter>
     </ClInclude>

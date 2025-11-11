@@ -72,13 +72,12 @@ uintptr_t NativeCore::findSig(const char* sig)
     return 0;
 }
 
+
+// HookFunction so minhook isnt essential to install into mods (also i want to multiplex them later)
 bool NativeCore::hookFunction(uintptr_t address, void* hook, void** original)
 {
-    static bool initialized = false;
-    if (!initialized) {
-        MH_Initialize();
-        initialized = true;
-    }
+    static std::once_flag initFlag;
+    std::call_once(initFlag, MH_Initialize);
 
     if (hookIds.find(address) == hookIds.end())
         hookIds[address] = 0;
