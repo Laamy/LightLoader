@@ -72,10 +72,10 @@ uintptr_t NativeCore::findSig(const char* sig)
     return 0;
 }
 
+// my intelisense died here
 #include <polyhook2/IHook.hpp>
 #include <polyhook2/Detour/NatDetour.hpp>
 
-// my intelisense died here
 std::unordered_map<size_t, std::unique_ptr<PLH::NatDetour>> hooks_;
 size_t nextId_ = 1;
 std::mutex mtx_;
