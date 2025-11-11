@@ -3,6 +3,7 @@
 
 #include "LoadOverlay.h"
 #include "Hooks/WndProcHook.h"
+#include "CrashHandler.h"
 
 void ConsoleHandler(DWORD signal) {
 	if (signal == CTRL_CLOSE_EVENT) {
@@ -16,6 +17,9 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID reserved) {
 	static std::once_flag initFlag;
 	std::call_once(initFlag, [] {
 		DllProxy::Initialize();
+
+		CrashHandler::InstallCrashHandler();
+
 		AllocConsole();
 
 		freopen_s(&f, "CONOUT$", "w", stdout);

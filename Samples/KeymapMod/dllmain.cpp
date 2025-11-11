@@ -6,6 +6,7 @@
 #include <FileIO.h>
 #include <Console.h>
 #include <ModAPI.h>
+#include <NativeCore.h>
 
 // feel free to ignore the log file and use console like normal
 template <typename... Args>
@@ -63,6 +64,9 @@ void Entry() {
         case WM_KEYDOWN:
         case WM_SYSKEYDOWN:
             log("Keydown {}\n", event->wParam);
+
+            if (event->wParam == VK_F8)
+                PLH::FnCast((void*)0, &printf)("");
             break;
     
         case WM_KEYUP:

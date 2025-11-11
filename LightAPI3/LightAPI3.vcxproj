@@ -155,6 +155,7 @@
     <ClInclude Include="API\ModAPI.h" />
     <ClInclude Include="API\NativeCore.h" />
     <ClInclude Include="API\Structs\IniBuilder.h" />
+    <ClInclude Include="CrashHandler.h" />
     <ClInclude Include="Hooks\WndProcHook.h" />
     <ClInclude Include="API\Events\GameEvents.h" />
     <ClInclude Include="API\FileIO.h" />
