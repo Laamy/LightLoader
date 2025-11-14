@@ -134,15 +134,22 @@ inline void ModLoaderThread() {
 
 		const std::string modPath = entry.path().string();
 		UpdateStatus(L"Loading " + entry.path().stem().wstring());
-
+		
 		HMODULE hMod = LoadLibraryA(modPath.c_str());
 
-		const std::string err = ModAPI::HasError();
+		auto modInfo = std::make_shared<ModInfo>();
+		modInfo->Path = modPath;
+		modInfo->IsLoaded = (hMod != NULL);
+		modInfo->Handle = hMod;
+		ModAPI::Mods.push_back(modInfo);
+
+		const std::string err = ModAPI::hasError();
 		if (!err.empty()) {
 			log("[{}, ERROR] {}\n", modPath, err);
-			ModAPI::Error("");
+			ModAPI::error("");
 			continue;
 		}
+
 
 		(hMod == NULL) ? log("Failed to load {} - error code {:#X}\n", modPath, GetLastError()) :
 			log("Loaded {}\n", modPath);
@@ -162,6 +169,8 @@ inline void ModLoaderThread() {
 	delete pfc;
 
 	SuspendGame(false);
+
+	GameEvents::lock();
 
 	LoadEvent dispatch;
 	GameEvents::dispatch(&dispatch);

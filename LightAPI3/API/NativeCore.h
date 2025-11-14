@@ -14,13 +14,13 @@
 using HookID = size_t;
 
 class NATIVECORE_API NativeCore {
-public: // some misc things
-    static uintptr_t findSig(const char* sig);
+public:
+	static uintptr_t findSig(const char* sig); // Find a signature in minecrafts executable
 
-    // Returns a HookID you can use to call unhookFunction
-    static HookID hookFunction(uintptr_t address, void* hook, void** original);
-    static bool unhookFunction(HookID hook);
+	static HookID hookFunction(uintptr_t address, void* hook, void** original); // Hook a function (PolyHook)
+	static bool unhookFunction(HookID hook); // Unhook a function (PolyHook)
 
+    static HMODULE getModule(void* addr); // Get a module from an address
 };
 
 #ifndef LIGHT_EXPORTS

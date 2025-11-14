@@ -15,6 +15,7 @@
 
 #include "BaseEvent.h"
 #include "Event/WndProcEvent.h"
+#include "Event/D3DPresentEvent.h"
 
 #include "Event/LoadEvent.h"
 #include "Event/ClosingEvent.h"
@@ -26,4 +27,7 @@ public:
     static void unsubscribe(EventID id, size_t token);
 
     static void dispatch(BaseEvent* ev);
+
+	// Do not call this as it will make the event system readonly permanently
+    static void lock();
 };

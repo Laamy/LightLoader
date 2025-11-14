@@ -7,6 +7,10 @@ LRESULT CALLBACK WndProcDetour(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		GameEvents::dispatch(&dispatch);
 	}
 
+	if (ImGui_WndProcHandler(hWnd, uMsg, wParam, lParam)) {
+		//return true;
+	}
+
 	WndProcEvent dispatch;
 	dispatch.hWnd = hWnd;
 	dispatch.Msg = uMsg;
@@ -14,11 +18,13 @@ LRESULT CALLBACK WndProcDetour(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	dispatch.lParam = lParam;
 	GameEvents::dispatch(&dispatch);
 
+	if (dispatch.result != -1)
+		return dispatch.result;
+
 	if (dispatch.cancel)
 		return dispatch.result;
 
-	if (dispatch.result == -1)
-		return CallFunc<LRESULT, HWND, UINT, WPARAM, LPARAM>(__o__WndProc, hWnd, uMsg, wParam, lParam);
+	return CallFunc<LRESULT, HWND, UINT, WPARAM, LPARAM>(__o__WndProc, hWnd, uMsg, wParam, lParam);
 }
 
 //anyone who makes fun of this or says u can just use setwindowshookex (no shit)

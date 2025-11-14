@@ -34,6 +34,6 @@ void log(std::format_string<Args...> fmt, Args&&... args) {
 template <typename R, typename... Args>
 R CallFunc(void* func, Args... args) { return ((R(*)(Args...))func)(args...); }
 
-#define LIGHTAPI_VERSION L"LightLoader v1.1.0"
+#define LIGHTAPI_VERSION L"LightLoader v1.1.2"
 
 #endif //PCH_H

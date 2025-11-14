@@ -3,7 +3,12 @@
 static std::mutex mutex{};
 static std::unordered_map<EventID, std::vector<ListenerRecord>> _listeners{};
 
+static bool isReadonly = false;
+
 inline size_t GameEvents::subscribe(EventID id, std::function<void(BaseEvent*)> cb) {
+    if (isReadonly)
+		throw std::logic_error("Event system is locked and readonly");
+
     static size_t tokenCount = 0;
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -17,6 +22,9 @@ inline size_t GameEvents::subscribe(EventID id, std::function<void(BaseEvent*)> 
 }
 
 inline void GameEvents::unsubscribe(EventID id, size_t token) {
+    if (isReadonly)
+		throw std::logic_error("Event system is locked and readonly");
+
     std::lock_guard<std::mutex> lock(mutex);
     auto it = _listeners.find(id);
     if (it == _listeners.end())
@@ -29,7 +37,21 @@ inline void GameEvents::unsubscribe(EventID id, size_t token) {
 }
 
 inline void GameEvents::dispatch(BaseEvent* ev) {
-    std::lock_guard<std::mutex> lock(mutex);
-    for (auto& rec : _listeners[ev->id()])
+    if (!isReadonly)
+        return;
+    //if (!isReadonly)
+	//	throw std::logic_error("Event system must be locked before dispatching events (Dispatch while or after load event)");
+    
+    //std::lock_guard<std::mutex> lock(mutex);
+    auto it = _listeners.find(ev->id());
+    if (it == _listeners.end())
+        return;
+
+    for (auto& rec : it->second)
         rec.callback(ev);
+}
+
+void GameEvents::lock()
+{
+	isReadonly = true;
 }

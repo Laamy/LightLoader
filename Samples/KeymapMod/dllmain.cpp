@@ -7,6 +7,7 @@
 #include <Console.h>
 #include <ModAPI.h>
 #include <NativeCore.h>
+#include <GameConfig.h>
 
 // feel free to ignore the log file and use console like normal
 template <typename... Args>
@@ -29,7 +30,7 @@ FileIO io("KeymapMod");
 IniBuilder config = io.getIniStream("config.ini");
 void Entry() {
     // ensure required libraries are loaded
-    auto failList = ModAPI::LoadDependenciesA({ "LightUt.dll" });
+    auto failList = ModAPI::loadDependenciesA({ "LightUt.dll" });
     if (!failList.empty()) {
         std::string msg = "Unable to load dependencies: ";
 
@@ -39,7 +40,7 @@ void Entry() {
                 msg += ", ";
         }
 
-        return ModAPI::Error(msg);
+        return ModAPI::error(msg);
     }
 
     GameEvents::subscribe((EventID)EventIDUt::RakNetSendToServer, [](BaseEvent* _event) {
@@ -57,40 +58,41 @@ void Entry() {
 
     GameEvents::subscribe(EventID::WndProc, [](BaseEvent* _event) {
         auto event = reinterpret_cast<WndProcEvent*>(_event);
+            
+        //log("Msg {}\n", event->Msg);
     
-        //log("Msg {}", event->Msg);
-    
-        switch (event->Msg) {
-        case WM_KEYDOWN:
-        case WM_SYSKEYDOWN:
-            log("Keydown {}\n", event->wParam);
-
-            if (event->wParam == VK_F8)
-                PLH::FnCast((void*)0, &printf)("");
-            break;
-    
-        case WM_KEYUP:
-        case WM_SYSKEYUP:
-            log("Keyup {}\n", event->wParam);
-            break;
-        
-        case WM_MOUSEMOVE:
-            int x = LOWORD(event->lParam);
-            int y = HIWORD(event->lParam);
-            log("Mouse moved {}, {}\n", x, y);
-            break;
-        }
+        //switch (event->Msg) {
+        //case WM_KEYDOWN:
+        //case WM_SYSKEYDOWN:
+        //    log("Keydown {}\n", event->wParam);
+        //
+        //    if (event->wParam == VK_F8)
+        //        PLH::FnCast((void*)0, &printf)("");
+        //    break;
+        //
+        //case WM_KEYUP:
+        //case WM_SYSKEYUP:
+        //    log("Keyup {}\n", event->wParam);
+        //    break;
+        //
+        //case WM_MOUSEMOVE:
+        //    int x = LOWORD(event->lParam);
+        //    int y = HIWORD(event->lParam);
+        //    log("Mouse moved {}, {}\n", x, y);
+        //    break;
+        //}
     });
 
     GameEvents::subscribe(EventID::Loaded, [](BaseEvent*) {
-        auto ini = io.getIniStream("test.ini");
-    
-        auto v1 = ini.GetOrDefault("TextThing", std::string("Hello, World!"));
-        std::print("TextThing {}\n", v1);
-    
-        auto v2 = ini.GetOrDefault("FloatThing", 1.f);
-        std::print("FloatThing {}\n", v2);
-    
+        //auto ini = io.getIniStream("test.ini");
+        //
+        //auto v1 = ini.GetOrDefault("TextThing", std::string("Hello, World!"));
+        //std::print("TextThing {}\n", v1);
+        //
+        //auto v2 = ini.GetOrDefault("FloatThing", 1.f);
+        //std::print("FloatThing {}\n", v2);
+
+        ModAPI::initMod(NativeCore::getModule(&Entry));
         log("Mod Loader final\n");
     });
     

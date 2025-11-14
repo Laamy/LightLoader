@@ -1,8 +1,13 @@
 #include "pch.h"
 #include "proxy.h"
 
+FileIO lightDir;
+IniBuilder lightConfig;
+
 #include "LoadOverlay.h"
+#include "Hooks/dxhook.h"
 #include "Hooks/WndProcHook.h"
+
 #include "CrashHandler.h"
 
 void ConsoleHandler(DWORD signal) {
@@ -32,8 +37,13 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID reserved) {
 		//log("OS: {}\n", GetOS());
 		log("-----------------------------------\n");
 
+		lightDir = FileIO("LightLoader");
+		lightConfig = lightDir.getIniStream("config.ini");
+
 		LoadResources();
 		InitModLoader();
+
+		initDxHook();
 
 		CreateThread(nullptr, 0,
 					 reinterpret_cast<LPTHREAD_START_ROUTINE>(InitMods),

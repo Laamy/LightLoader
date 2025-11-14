@@ -149,17 +149,29 @@
   <ItemGroup>
     <ClInclude Include="API\Console.h" />
     <ClInclude Include="API\Events\BaseEvent.h" />
+    <ClInclude Include="API\Events\Event\D3DPresentEvent.h" />
     <ClInclude Include="API\Events\Event\LoadEvent.h" />
     <ClInclude Include="API\Events\Event\ClosingEvent.h" />
     <ClInclude Include="API\Events\Event\WndProcEvent.h" />
+    <ClInclude Include="API\Extensions\imgui\imconfig.h" />
+    <ClInclude Include="API\Extensions\imgui\imgui.h" />
+    <ClInclude Include="API\Extensions\imgui\imgui_impl_dx11.h" />
+    <ClInclude Include="API\Extensions\imgui\imgui_impl_dx12.h" />
+    <ClInclude Include="API\Extensions\imgui\imgui_impl_win32.h" />
+    <ClInclude Include="API\Extensions\imgui\imgui_internal.h" />
+    <ClInclude Include="API\Extensions\imgui\imstb_rectpack.h" />
+    <ClInclude Include="API\Extensions\imgui\imstb_textedit.h" />
+    <ClInclude Include="API\Extensions\imgui\imstb_truetype.h" />
     <ClInclude Include="API\ModAPI.h" />
     <ClInclude Include="API\NativeCore.h" />
     <ClInclude Include="API\Structs\IniBuilder.h" />
     <ClInclude Include="CrashHandler.h" />
+    <ClInclude Include="Hooks\dxhook.h" />
     <ClInclude Include="Hooks\WndProcHook.h" />
     <ClInclude Include="API\Events\GameEvents.h" />
     <ClInclude Include="API\FileIO.h" />
     <ClInclude Include="API\GameConfig.h" />
+    <ClInclude Include="Libs\kiero\kiero.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="LoadOverlay.h" />
     <ClInclude Include="proxy.h" />
@@ -169,12 +181,21 @@
   <ItemGroup>
     <ClCompile Include="API\Console.cpp" />
     <ClCompile Include="API\Events\GameEvents.cpp" />
+    <ClCompile Include="API\Extensions\imgui\imgui.cpp" />
+    <ClCompile Include="API\Extensions\imgui\imgui_demo.cpp" />
+    <ClCompile Include="API\Extensions\imgui\imgui_draw.cpp" />
+    <ClCompile Include="API\Extensions\imgui\imgui_impl_dx11.cpp" />
+    <ClCompile Include="API\Extensions\imgui\imgui_impl_dx12.cpp" />
+    <ClCompile Include="API\Extensions\imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="API\Extensions\imgui\imgui_tables.cpp" />
+    <ClCompile Include="API\Extensions\imgui\imgui_widgets.cpp" />
     <ClCompile Include="API\FileIO.cpp" />
     <ClCompile Include="API\GameConfig.cpp" />
     <ClCompile Include="API\ModAPI.cpp" />
     <ClCompile Include="API\NativeCore.cpp" />
     <ClCompile Include="API\Structs\IniBuilder.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="Libs\kiero\kiero.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

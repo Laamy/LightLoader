@@ -115,3 +115,14 @@ bool NativeCore::unhookFunction(HookID hook)
     hooks_.erase(it);
     return true;
 }
+
+HMODULE NativeCore::getModule(void* func)
+{
+    HMODULE hMod = nullptr;
+    GetModuleHandleExW(
+        GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+        GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+        reinterpret_cast<LPCWSTR>(func),
+        &hMod);
+    return hMod;
+}
